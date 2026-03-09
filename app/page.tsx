@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import BottomNav from "@/components/BottomNav";
 
 const REVIEWS = [
   {
@@ -23,7 +24,7 @@ const REVIEWS = [
     stars: 5,
   },
   {
-    text: "I'm a first-gen renter. No one in my family could tell me what a normal security deposit was. RentReady did in about 30 seconds.",
+    text: "I'm a first-gen renter. No one in my family could tell me what a normal security deposit was. Aster did in about 30 seconds.",
     name: "Jordan R.",
     location: "Seattle, WA",
     stars: 5,
@@ -33,6 +34,24 @@ const REVIEWS = [
     name: "Aaliyah & Cam",
     location: "Los Angeles, CA",
     stars: 5,
+  },
+];
+
+const FEATURES = [
+  {
+    label: "City Navigator",
+    desc: "Explore rent prices, neighborhoods, and market norms before you move.",
+    href: "/start",
+  },
+  {
+    label: "Apartment Tracker",
+    desc: "Manage every listing, tour, and application in one place.",
+    href: "/listings",
+  },
+  {
+    label: "Housing Fund",
+    desc: "Invest alongside your rent toward a future home.",
+    href: "/fund",
   },
 ];
 
@@ -55,96 +74,111 @@ export default function Landing() {
   const review = REVIEWS[reviewIndex];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
-      {/* Nav */}
-      <nav
-        className="flex items-center justify-between px-8 py-5 border-b"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <span className="font-semibold text-base tracking-tight" style={{ color: "var(--foreground)" }}>
-          Aster
-        </span>
-        <button
-          onClick={() => router.push("/start")}
-          className="text-sm font-medium transition-opacity hover:opacity-60"
-          style={{ color: "var(--muted-foreground)" }}
-        >
-          Get started →
-        </button>
-      </nav>
+    <div className="min-h-screen flex flex-col pb-16" style={{ background: "var(--background)" }}>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-6 pt-20 pb-16 max-w-2xl mx-auto w-full">
-        <p
-          className="text-xs font-semibold uppercase tracking-widest mb-6"
-          style={{ color: "var(--primary)" }}
-        >
-          For renters who deserve better
-        </p>
-        <h1
-          className="text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6"
-          style={{ color: "var(--foreground)" }}
-        >
-          Renting is confusing.
-          <br />
-          <span style={{ color: "var(--primary)" }}>It doesn&apos;t have to be.</span>
-        </h1>
-        <p
-          className="text-lg leading-relaxed mb-10 max-w-lg"
-          style={{ color: "var(--muted-foreground)" }}
-        >
-          Moving to a new city is hard enough. We built the guide, financial
-          management tool, and renter advocate we wish we had — all in one.
-        </p>
-        <button
-          onClick={() => router.push("/start")}
-          className="px-8 py-4 rounded-lg text-base font-semibold transition-opacity hover:opacity-90 active:opacity-75"
-          style={{ background: "var(--foreground)", color: "var(--background)" }}
-        >
-          Let&apos;s get started
-        </button>
-        <p className="text-xs mt-4" style={{ color: "var(--muted-foreground)" }}>
-          Free. No sign-up required.
-        </p>
+      {/* Dark hero */}
+      <section
+        className="flex flex-col px-6 pt-10 pb-16"
+        style={{ background: "#0d0b14", minHeight: "100svh" }}
+      >
+        {/* Nav */}
+        <nav className="flex items-center justify-between mb-16">
+          <span
+            className="text-2xl tracking-widest uppercase"
+            style={{
+              fontFamily: "var(--font-logo)",
+              fontWeight: 300,
+              color: "#ffffff",
+              letterSpacing: "0.22em",
+            }}
+          >
+            Aster
+          </span>
+          <button
+            onClick={() => router.push("/start")}
+            className="text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-60"
+            style={{ color: "rgba(255,255,255,0.5)" }}
+          >
+            Get started
+          </button>
+        </nav>
+
+        {/* Hero text */}
+        <div className="flex-1 flex flex-col justify-center">
+          <h1
+            className="font-bold leading-none tracking-tight mb-12"
+            style={{ fontSize: "clamp(52px, 12vw, 96px)", lineHeight: 0.92 }}
+          >
+            <span style={{ color: "#ffffff" }}>KNOW</span>
+            <br />
+            <span style={{ color: "#ffffff" }}>YOUR</span>
+            <br />
+            <span style={{ color: "#7c6bc4" }}>CITY.</span>
+            <br />
+            <span style={{ color: "#ffffff" }}>TRACK</span>
+            <br />
+            <span style={{ color: "#ffffff" }}>YOUR</span>
+            <br />
+            <span style={{ color: "#7c6bc4" }}>SEARCH.</span>
+            <br />
+            <span style={{ color: "#ffffff" }}>BUILD</span>
+            <br />
+            <span style={{ color: "#ffffff" }}>YOUR</span>
+            <br />
+            <span style={{ color: "#7c6bc4" }}>WEALTH.</span>
+          </h1>
+
+          <button
+            onClick={() => router.push("/start")}
+            className="self-start px-8 py-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+            style={{ background: "#7c6bc4", color: "#ffffff" }}
+          >
+            Get started free
+          </button>
+          <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.3)" }}>
+            No sign-up required.
+          </p>
+        </div>
       </section>
 
-      {/* Features */}
-      <section className="px-6 py-14 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-2xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-center mb-8"
-            style={{ color: "var(--primary)" }}>Three tools in one</p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {[
-              {
-                emoji: "🏙️",
-                title: "City Navigator",
-                desc: "Explore rent prices, neighborhoods, and market norms before you move.",
-                cta: "Explore cities →",
-                href: "/start",
-              },
-              {
-                emoji: "🏠",
-                title: "My apartment tracker",
-                desc: "Manage every listing, tour, and application — all in one place.",
-                cta: "Track my search →",
-                href: "/listings",
-              },
-              {
-                emoji: "💰",
-                title: "Housing Fund",
-                desc: "Automatically invest alongside your rent toward a future home.",
-                cta: "Start my fund →",
-                href: "/fund",
-              },
-            ].map(f => (
-              <button key={f.title} onClick={() => router.push(f.href)}
-                className="p-5 rounded-xl border text-left transition-all hover:shadow-sm"
-                style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                <div className="text-2xl mb-3">{f.emoji}</div>
-                <div className="font-semibold text-sm mb-2" style={{ color: "var(--foreground)" }}>{f.title}</div>
-                <div className="text-xs leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>{f.desc}</div>
-                <div className="text-xs font-semibold" style={{ color: "var(--primary)" }}>{f.cta}</div>
-              </button>
+      {/* Monzo-style features list */}
+      <section className="px-6 py-14" style={{ background: "var(--background)" }}>
+        <div className="max-w-lg mx-auto">
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-8"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            What do you need?
+          </p>
+          <div>
+            {FEATURES.map((f, i) => (
+              <div key={f.href}>
+                <button
+                  onClick={() => router.push(f.href)}
+                  className="w-full flex items-center justify-between py-6 text-left group transition-opacity hover:opacity-70"
+                >
+                  <div>
+                    <div
+                      className="text-2xl font-bold tracking-tight mb-1"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      {f.label}
+                    </div>
+                    <div className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                      {f.desc}
+                    </div>
+                  </div>
+                  <span
+                    className="text-xl ml-4 flex-shrink-0"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    →
+                  </span>
+                </button>
+                {i < FEATURES.length - 1 && (
+                  <div className="border-t" style={{ borderColor: "var(--border)" }} />
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -160,7 +194,6 @@ export default function Landing() {
             className="transition-opacity duration-400"
             style={{ opacity: visible ? 1 : 0 }}
           >
-            {/* Stars */}
             <div className="flex justify-center gap-1 mb-4">
               {Array.from({ length: review.stars }).map((_, i) => (
                 <span key={i} style={{ color: "#7c6bc4", fontSize: "18px", lineHeight: 1 }}>★</span>
@@ -180,7 +213,6 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Dots */}
           <div className="flex justify-center gap-2 mt-8">
             {REVIEWS.map((_, i) => (
               <button
@@ -233,6 +265,8 @@ export default function Landing() {
           Aster — built for renters
         </p>
       </footer>
+
+      <BottomNav />
     </div>
   );
 }

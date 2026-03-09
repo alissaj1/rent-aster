@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import BottomNav from "@/components/BottomNav";
 
 type RiskLevel = "conservative" | "balanced" | "growth";
 type ContribType = "percent" | "fixed";
@@ -12,12 +13,18 @@ type FundConfig = {
   contribValue: number;
   riskLevel: RiskLevel;
   startDate: string;
+  bankName?: string;
 };
 
 const RISK_OPTIONS: { id: RiskLevel; label: string; rate: number; desc: string; expected: string }[] = [
-  { id: "conservative", label: "Conservative", rate: 0.045, desc: "Lower risk, steady growth",        expected: "~4–5% annual return" },
-  { id: "balanced",     label: "Balanced",     rate: 0.07,  desc: "Mix of growth and stability",      expected: "~6–8% annual return" },
+  { id: "conservative", label: "Conservative", rate: 0.045, desc: "Lower risk, steady growth",         expected: "~4–5% annual return" },
+  { id: "balanced",     label: "Balanced",     rate: 0.07,  desc: "Mix of growth and stability",       expected: "~6–8% annual return" },
   { id: "growth",       label: "Growth",       rate: 0.10,  desc: "Higher potential, more volatility", expected: "~9–12% annual return" },
+];
+
+const BANKS = [
+  "Chase", "Bank of America", "Wells Fargo", "Citi",
+  "Capital One", "US Bank", "TD Bank", "Other",
 ];
 
 function calcBalance(monthly: number, annualRate: number, months: number): number {
@@ -98,7 +105,10 @@ export default function FundPage() {
   const router = useRouter();
   const [config, setConfig]     = useState<FundConfig | null>(null);
   const [loaded, setLoaded]     = useState(false);
-  const [step, setStep]         = useState<1 | 2 | 3>(1);
+  const [step, setStep]         = useState<1 | 2 | 3 | 4>(1);
+  const [selectedBank, setSelectedBank] = useState("");
+  const [connecting, setConnecting]     = useState(false);
+  const [connected, setConnected]       = useState(false);
   const [rent, setRent]         = useState(2000);
   const [contribType, setContribType] = useState<ContribType>("percent");
   const [contribValue, setContribValue] = useState(10);
@@ -112,10 +122,21 @@ export default function FundPage() {
     setLoaded(true);
   }, []);
 
+  function handleBankConnect(bank: string) {
+    if (connecting || connected) return;
+    setSelectedBank(bank);
+    setConnecting(true);
+    setTimeout(() => {
+      setConnecting(false);
+      setConnected(true);
+    }, 1500);
+  }
+
   function startFund() {
     const cfg: FundConfig = {
       monthlyRent: rent, contribType, contribValue,
       riskLevel, startDate: new Date().toISOString().split("T")[0],
+      bankName: selectedBank || undefined,
     };
     localStorage.setItem("aster_fund", JSON.stringify(cfg));
     setConfig(cfg);
@@ -126,6 +147,9 @@ export default function FundPage() {
     localStorage.removeItem("aster_fund");
     setConfig(null);
     setStep(1);
+    setSelectedBank("");
+    setConnecting(false);
+    setConnected(false);
   }
 
   if (!loaded) return null;
@@ -152,11 +176,14 @@ export default function FundPage() {
     ];
 
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
+      <div className="min-h-screen flex flex-col pb-20" style={{ background: "var(--background)" }}>
         <nav className="flex items-center justify-between px-5 py-4 border-b"
           style={{ borderColor: "var(--border)" }}>
-          <span className="font-semibold text-base tracking-tight cursor-pointer"
-            style={{ color: "var(--foreground)" }} onClick={() => router.push("/")}>
+          <span
+            className="text-xl tracking-widest uppercase cursor-pointer"
+            style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}
+            onClick={() => router.push("/")}
+          >
             Aster
           </span>
           <button onClick={editSetup} className="text-xs font-medium"
@@ -168,6 +195,11 @@ export default function FundPage() {
         <div className="px-5 pt-8 pb-4">
           <p className="text-xs font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--primary)" }}>Housing Fund</p>
+          {config.bankName && (
+            <p className="text-xs mb-3" style={{ color: "var(--muted-foreground)" }}>
+              Connected to {config.bankName}
+            </p>
+          )}
           <div className="text-5xl font-bold tracking-tight mb-1" style={{ color: "var(--foreground)" }}>
             ${Math.round(balance).toLocaleString()}
           </div>
@@ -249,6 +281,7 @@ export default function FundPage() {
             Projections assume steady monthly contributions and historical average market returns. Not financial advice.
           </p>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -259,15 +292,18 @@ export default function FundPage() {
   const selectedRisk = RISK_OPTIONS.find(r => r.id === riskLevel) ?? RISK_OPTIONS[1];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen flex flex-col pb-20" style={{ background: "var(--background)" }}>
       <nav className="flex items-center justify-between px-5 py-4 border-b"
         style={{ borderColor: "var(--border)" }}>
-        <span className="font-semibold text-base tracking-tight cursor-pointer"
-          style={{ color: "var(--foreground)" }} onClick={() => router.push("/")}>
+        <span
+          className="text-xl tracking-widest uppercase cursor-pointer"
+          style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}
+          onClick={() => router.push("/")}
+        >
           Aster
         </span>
         <div className="flex items-center gap-2">
-          {([1, 2, 3] as const).map(s => (
+          {([1, 2, 3, 4] as const).map(s => (
             <div key={s} className="rounded-full transition-all duration-300"
               style={{ width: step === s ? "24px" : "8px", height: "8px", background: step >= s ? "var(--foreground)" : "var(--border)" }} />
           ))}
@@ -276,11 +312,66 @@ export default function FundPage() {
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
 
-        {/* Step 1: Rent */}
+        {/* Step 1: Link account */}
         {step === 1 && (
           <div className="w-full max-w-md">
             <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--primary)" }}>
-              Step 1 of 3
+              Step 1 of 4
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "var(--foreground)" }}>
+              Link your account
+            </h1>
+            <p className="text-sm mb-8" style={{ color: "var(--muted-foreground)" }}>
+              Connect the bank account you use to pay rent. We&apos;ll use it to automatically invest a portion each month.
+            </p>
+
+            {!connected ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  {BANKS.map(bank => (
+                    <button key={bank} onClick={() => handleBankConnect(bank)}
+                      className="p-4 rounded-xl border text-left transition-all"
+                      style={{
+                        borderColor: selectedBank === bank && connecting ? "var(--primary)" : "var(--border)",
+                        background: selectedBank === bank && connecting ? "#ede9fa" : "var(--card)",
+                      }}>
+                      <div className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{bank}</div>
+                      {selectedBank === bank && connecting && (
+                        <div className="text-xs mt-1" style={{ color: "var(--primary)" }}>Connecting...</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
+                  Prototype only — no credentials are stored or transmitted.
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"
+                  style={{ background: "#e6f4ef" }}>
+                  ✓
+                </div>
+                <p className="text-lg font-semibold mb-1" style={{ color: "#1a6b4a" }}>
+                  {selectedBank} connected
+                </p>
+                <p className="text-sm mb-8" style={{ color: "var(--muted-foreground)" }}>
+                  Ready to start investing from your account.
+                </p>
+                <button onClick={() => setStep(2)} className="w-full py-3 rounded-lg text-sm font-semibold"
+                  style={{ background: "var(--primary)", color: "#ffffff" }}>
+                  Continue →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 2: Rent */}
+        {step === 2 && (
+          <div className="w-full max-w-md">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--primary)" }}>
+              Step 2 of 4
             </p>
             <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "var(--foreground)" }}>
               What&apos;s your monthly rent?
@@ -298,18 +389,25 @@ export default function FundPage() {
             <div className="flex justify-between text-xs mt-2 mb-10" style={{ color: "var(--muted-foreground)" }}>
               <span>$500</span><span>$6,000</span>
             </div>
-            <button onClick={() => setStep(2)} className="w-full py-3 rounded-lg text-sm font-semibold"
-              style={{ background: "var(--primary)", color: "#ffffff" }}>
-              Continue →
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setStep(1)}
+                className="px-5 py-3 rounded-lg text-sm font-medium border"
+                style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>
+                ← Back
+              </button>
+              <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-lg text-sm font-semibold"
+                style={{ background: "var(--primary)", color: "#ffffff" }}>
+                Continue →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Step 2: Contribution */}
-        {step === 2 && (
+        {/* Step 3: Contribution */}
+        {step === 3 && (
           <div className="w-full max-w-md">
             <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--primary)" }}>
-              Step 2 of 3
+              Step 3 of 4
             </p>
             <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "var(--foreground)" }}>
               How much will you invest?
@@ -359,12 +457,12 @@ export default function FundPage() {
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)}
+              <button onClick={() => setStep(2)}
                 className="px-5 py-3 rounded-lg text-sm font-medium border"
                 style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>
                 ← Back
               </button>
-              <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-lg text-sm font-semibold"
+              <button onClick={() => setStep(4)} className="flex-1 py-3 rounded-lg text-sm font-semibold"
                 style={{ background: "var(--primary)", color: "#ffffff" }}>
                 Continue →
               </button>
@@ -372,11 +470,11 @@ export default function FundPage() {
           </div>
         )}
 
-        {/* Step 3: Risk */}
-        {step === 3 && (
+        {/* Step 4: Risk */}
+        {step === 4 && (
           <div className="w-full max-w-md">
             <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--primary)" }}>
-              Step 3 of 3
+              Step 4 of 4
             </p>
             <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "var(--foreground)" }}>
               Pick your investment style
@@ -411,6 +509,7 @@ export default function FundPage() {
               <p className="text-xs font-semibold uppercase tracking-wider mb-3"
                 style={{ color: "var(--muted-foreground)" }}>Fund summary</p>
               {[
+                { label: "Account", value: selectedBank || "Not linked" },
                 { label: "Monthly investment", value: `$${Math.round(monthlyContrib).toLocaleString()}/mo` },
                 { label: "After 1 year",        value: `$${Math.round(calcBalance(monthlyContrib, selectedRisk.rate, 12)).toLocaleString()}` },
                 { label: "After 5 years",       value: `$${Math.round(calcBalance(monthlyContrib, selectedRisk.rate, 60)).toLocaleString()}`, bold: true },
@@ -425,7 +524,7 @@ export default function FundPage() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)}
+              <button onClick={() => setStep(3)}
                 className="px-5 py-3 rounded-lg text-sm font-medium border"
                 style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>
                 ← Back
@@ -438,6 +537,7 @@ export default function FundPage() {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }

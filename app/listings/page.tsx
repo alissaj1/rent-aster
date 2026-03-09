@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import BottomNav from "@/components/BottomNav";
 
 type StatusId = "saved" | "touring" | "applied" | "approved" | "passed";
 type PlatformId = "zillow" | "apartments" | "facebook" | "streeteasy" | "craigslist" | "trulia" | "realtor" | "other";
@@ -33,12 +34,12 @@ const PLATFORMS: { id: PlatformId; label: string; color: string }[] = [
   { id: "other",       label: "Other",            color: "#777065" },
 ];
 
-const STATUSES: { id: StatusId; label: string; bg: string; color: string }[] = [
-  { id: "saved",    label: "Saved",       bg: "var(--muted)",  color: "var(--muted-foreground)" },
-  { id: "touring",  label: "Touring",     bg: "#ede9fa",       color: "#7c6bc4" },
-  { id: "applied",  label: "Applied",     bg: "#e6f4ef",       color: "#1a6b4a" },
-  { id: "approved", label: "Approved ✓",  bg: "#e6f4ef",       color: "#1a6b4a" },
-  { id: "passed",   label: "Passed",      bg: "#fde8e6",       color: "#c0392b" },
+const STATUSES: { id: StatusId; label: string; bg: string; color: string; icon: string }[] = [
+  { id: "saved",    label: "Saved",      bg: "var(--muted)",  color: "var(--muted-foreground)", icon: "♡" },
+  { id: "touring",  label: "Touring",    bg: "#ede9fa",       color: "#7c6bc4",                 icon: "↗" },
+  { id: "applied",  label: "Applied",    bg: "#e6f4ef",       color: "#1a6b4a",                 icon: "→" },
+  { id: "approved", label: "Approved",   bg: "#e6f4ef",       color: "#1a6b4a",                 icon: "✓" },
+  { id: "passed",   label: "Passed",     bg: "#fde8e6",       color: "#c0392b",                 icon: "✕" },
 ];
 
 const BEDROOMS = ["Studio", "1BR", "2BR", "3BR", "4BR+"];
@@ -63,6 +64,62 @@ function loadRoommates(): string[] {
   catch { return []; }
 }
 
+function parseListingUrl(url: string): Partial<FormData> {
+  try {
+    const u = new URL(url);
+    const domain = u.hostname.replace("www.", "");
+    let source: PlatformId = "other";
+    let address = "";
+
+    if (domain.includes("zillow")) {
+      source = "zillow";
+      // /homedetails/123-Main-St-Chicago-IL-60601/12345_zpid/
+      const match = u.pathname.match(/\/homedetails\/([^/]+)\//);
+      if (match) {
+        address = match[1].replace(/-/g, " ").replace(/\d{5}$/, "").trim();
+        address = address.replace(/\s+/g, " ").trim();
+      }
+    } else if (domain.includes("apartments.com")) {
+      source = "apartments";
+      // /the-building-name-city-st/
+      const slug = u.pathname.split("/").filter(Boolean)[0] || "";
+      address = slug.replace(/-/g, " ");
+    } else if (domain.includes("streeteasy")) {
+      source = "streeteasy";
+      // /building/building-name or /rental/12345-address
+      const parts = u.pathname.split("/").filter(Boolean);
+      if (parts.length >= 2) address = parts[1].replace(/-/g, " ");
+    } else if (domain.includes("facebook")) {
+      source = "facebook";
+    } else if (domain.includes("craigslist")) {
+      source = "craigslist";
+    } else if (domain.includes("trulia")) {
+      source = "trulia";
+      const match = u.pathname.match(/\/p\/[^/]+\/([^/]+)/);
+      if (match) address = match[1].replace(/-/g, " ");
+    } else if (domain.includes("realtor.com")) {
+      source = "realtor";
+      const match = u.pathname.match(/\/realestateandhomes-detail\/([^/]+)/);
+      if (match) address = match[1].replace(/-/g, " ");
+    }
+
+    // Capitalize address words
+    if (address) {
+      address = address.replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\s+/g, " ").trim();
+    }
+
+    return { source, address: address || "", sourceUrl: url };
+  } catch {
+    return { sourceUrl: url };
+  }
+}
+
+function formatRoommate(name: string): string {
+  const trimmed = name.trim();
+  if (trimmed.startsWith("@")) return trimmed;
+  return `@${trimmed}`;
+}
+
 export default function ListingsPage() {
   const router = useRouter();
   const [listings, setListings]             = useState<Listing[]>([]);
@@ -74,19 +131,33 @@ export default function ListingsPage() {
   const [globalRoommates, setGlobalRoommates] = useState<string[]>([]);
   const [globalInput, setGlobalInput]       = useState("");
 
+  // URL import
+  const [showImport, setShowImport]         = useState(false);
+  const [importUrl, setImportUrl]           = useState("");
+  const importRef = useRef<HTMLInputElement>(null);
+
+  // Compare mode
+  const [compareMode, setCompareMode]       = useState(false);
+  const [compareIds, setCompareIds]         = useState<string[]>([]);
+  const [showCompare, setShowCompare]       = useState(false);
+
   useEffect(() => {
     setListings(loadListings());
     setGlobalRoommates(loadRoommates());
   }, []);
+
+  useEffect(() => {
+    if (showImport && importRef.current) importRef.current.focus();
+  }, [showImport]);
 
   function persist(next: Listing[]) {
     setListings(next);
     saveListings(next);
   }
 
-  function openAdd() {
+  function openAdd(prefill?: Partial<FormData>) {
     setEditId(null);
-    setForm({ ...EMPTY_FORM, roommates: [...globalRoommates] });
+    setForm({ ...EMPTY_FORM, roommates: [...globalRoommates], ...prefill });
     setRoommateInput("");
     setShowForm(true);
   }
@@ -124,15 +195,19 @@ export default function ListingsPage() {
   }
 
   function addFormRoommate() {
-    const name = roommateInput.trim();
-    if (!name || form.roommates.includes(name)) return;
+    const raw = roommateInput.trim();
+    if (!raw) return;
+    const name = formatRoommate(raw);
+    if (form.roommates.includes(name)) return;
     setForm(f => ({ ...f, roommates: [...f.roommates, name] }));
     setRoommateInput("");
   }
 
   function addGlobalRoommate() {
-    const name = globalInput.trim();
-    if (!name || globalRoommates.includes(name)) return;
+    const raw = globalInput.trim();
+    if (!raw) return;
+    const name = formatRoommate(raw);
+    if (globalRoommates.includes(name)) return;
     const next = [...globalRoommates, name];
     setGlobalRoommates(next);
     localStorage.setItem("aster_roommates", JSON.stringify(next));
@@ -145,19 +220,42 @@ export default function ListingsPage() {
     localStorage.setItem("aster_roommates", JSON.stringify(next));
   }
 
+  function handleImport() {
+    if (!importUrl.trim()) return;
+    const prefill = parseListingUrl(importUrl.trim());
+    setShowImport(false);
+    setImportUrl("");
+    openAdd(prefill);
+  }
+
+  function toggleCompareId(id: string) {
+    setCompareIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 2) return [prev[1], id];
+      return [...prev, id];
+    });
+  }
+
   const filtered = activeStatus === "all" ? listings : listings.filter(l => l.status === activeStatus);
   const totalFees = listings.reduce((s, l) => s + (l.applicationFee || 0), 0);
 
   function getPlatform(id: string) { return PLATFORMS.find(p => p.id === id) || PLATFORMS[PLATFORMS.length - 1]; }
   function getStatus(id: string)   { return STATUSES.find(s => s.id === id) || STATUSES[0]; }
+  function getListing(id: string)  { return listings.find(l => l.id === id); }
+
+  const compareA = compareIds[0] ? getListing(compareIds[0]) : null;
+  const compareB = compareIds[1] ? getListing(compareIds[1]) : null;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
       {/* Nav */}
       <nav className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10"
         style={{ borderColor: "var(--border)", background: "var(--background)" }}>
-        <span className="font-semibold text-base tracking-tight cursor-pointer"
-          style={{ color: "var(--foreground)" }} onClick={() => router.push("/")}>
+        <span
+          className="text-xl tracking-widest uppercase cursor-pointer"
+          style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}
+          onClick={() => router.push("/")}
+        >
           Aster
         </span>
         {totalFees > 0 && (
@@ -170,23 +268,83 @@ export default function ListingsPage() {
 
       {/* Header */}
       <div className="px-5 pt-7 pb-3">
-        <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ color: "var(--foreground)" }}>
-          My apartment tracker
-        </h1>
+        <div className="flex items-center gap-3 mb-1">
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+            Apartment tracker
+          </h1>
+          <button
+            onClick={() => openAdd()}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-base font-bold transition-all hover:opacity-80"
+            style={{ background: "var(--primary)", color: "#fff" }}
+          >
+            +
+          </button>
+        </div>
         <p className="text-sm mb-5" style={{ color: "var(--muted-foreground)" }}>
           {listings.length === 0
-            ? "Start tracking apartments you're considering."
-            : `${listings.length} apartment${listings.length !== 1 ? "s" : ""} tracked${
+            ? "Your apartment hunt starts here."
+            : `${listings.length} place${listings.length !== 1 ? "s" : ""} on your radar${
                 listings.filter(l => l.status === "applied" || l.status === "approved").length > 0
                   ? ` · ${listings.filter(l => l.status === "applied" || l.status === "approved").length} applied`
                   : ""
               }`}
         </p>
 
-        {/* Searching with */}
+        {/* Toolbar: Import + Compare */}
+        <div className="flex items-center gap-2 mb-5">
+          <button
+            onClick={() => { setShowImport(v => !v); setCompareMode(false); }}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
+            style={{
+              borderColor: showImport ? "var(--primary)" : "var(--border)",
+              color: showImport ? "var(--primary)" : "var(--muted-foreground)",
+              background: showImport ? "#ede9fa" : "transparent",
+            }}
+          >
+            Import from link
+          </button>
+          {listings.length >= 2 && (
+            <button
+              onClick={() => { setCompareMode(v => !v); setCompareIds([]); setShowImport(false); }}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
+              style={{
+                borderColor: compareMode ? "var(--primary)" : "var(--border)",
+                color: compareMode ? "var(--primary)" : "var(--muted-foreground)",
+                background: compareMode ? "#ede9fa" : "transparent",
+              }}
+            >
+              Compare
+            </button>
+          )}
+        </div>
+
+        {/* Import URL input */}
+        {showImport && (
+          <div className="flex gap-2 mb-5">
+            <input
+              ref={importRef}
+              type="url"
+              placeholder="Paste a Zillow, StreetEasy, or Apartments.com link..."
+              value={importUrl}
+              onChange={e => setImportUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleImport(); }}
+              className="flex-1 px-4 py-2.5 text-sm rounded-lg border outline-none"
+              style={{ borderColor: "var(--primary)", background: "var(--card)", color: "var(--foreground)" }}
+            />
+            <button
+              onClick={handleImport}
+              className="px-4 py-2.5 text-sm font-semibold rounded-lg"
+              style={{ background: "var(--primary)", color: "#fff" }}
+            >
+              Import
+            </button>
+          </div>
+        )}
+
+        {/* Crew */}
         <div className="flex flex-wrap items-center gap-2 mb-1">
           <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)" }}>
-            Searching with:
+            Your crew:
           </span>
           {globalRoommates.map(name => (
             <span key={name} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
@@ -197,11 +355,11 @@ export default function ListingsPage() {
           ))}
           <div className="flex items-center gap-1">
             <input
-              type="text" placeholder="+ Add person" value={globalInput}
+              type="text" placeholder="+ @person" value={globalInput}
               onChange={e => setGlobalInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addGlobalRoommate(); } }}
               className="text-xs px-2.5 py-1 rounded-full border outline-none"
-              style={{ borderColor: "var(--border)", background: "transparent", color: "var(--foreground)", width: "90px" }}
+              style={{ borderColor: "var(--border)", background: "transparent", color: "var(--foreground)", width: "80px" }}
             />
           </div>
         </div>
@@ -210,7 +368,7 @@ export default function ListingsPage() {
       {/* Status tabs */}
       <div className="px-5 pb-3">
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {([{ id: "all" as const, label: "All" }, ...STATUSES]).map(s => {
+          {([{ id: "all" as const, label: "All", icon: "" }, ...STATUSES]).map(s => {
             const count = s.id === "all" ? listings.length : listings.filter(l => l.status === s.id).length;
             const isActive = activeStatus === s.id;
             return (
@@ -220,48 +378,90 @@ export default function ListingsPage() {
                   background: isActive ? "var(--foreground)" : "var(--muted)",
                   color: isActive ? "var(--background)" : "var(--muted-foreground)",
                 }}>
-                {s.label}{count > 0 ? ` (${count})` : ""}
+                {"icon" in s && s.icon ? `${s.icon} ` : ""}{s.label}{count > 0 ? ` (${count})` : ""}
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Compare hint */}
+      {compareMode && (
+        <div className="mx-5 mb-3 px-4 py-3 rounded-lg text-sm"
+          style={{ background: "#ede9fa", color: "#7c6bc4" }}>
+          {compareIds.length === 0 && "Select two places to compare them head-to-head."}
+          {compareIds.length === 1 && "Pick one more to start the comparison."}
+          {compareIds.length === 2 && (
+            <div className="flex items-center justify-between">
+              <span>2 selected — ready to compare!</span>
+              <button onClick={() => setShowCompare(true)}
+                className="text-xs font-bold underline ml-2">
+                Compare now
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Cards */}
       <div className="flex-1 px-5 pb-28">
         {filtered.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-5xl mb-4">🏠</div>
+            <p className="text-4xl mb-4" style={{ color: "var(--border)" }}>[ ]</p>
             <p className="text-sm font-semibold mb-1" style={{ color: "var(--foreground)" }}>
-              {activeStatus === "all" ? "No listings yet" : `No ${getStatus(activeStatus).label.toLowerCase()} listings`}
+              {activeStatus === "all" ? "Nothing here yet" : `No ${getStatus(activeStatus).label.toLowerCase()} listings`}
             </p>
-            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-              {activeStatus === "all" ? "Tap + to add your first apartment." : "Switch to All to see everything."}
+            <p className="text-xs mb-5" style={{ color: "var(--muted-foreground)" }}>
+              {activeStatus === "all" ? "Tap + to add your first place, or import from a link." : "Switch to All to see everything."}
             </p>
+            {activeStatus === "all" && (
+              <button onClick={() => openAdd()}
+                className="text-xs font-semibold px-4 py-2 rounded-lg"
+                style={{ background: "var(--primary)", color: "#fff" }}>
+                Add your first listing
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {filtered.map(l => {
               const platform = getPlatform(l.source);
               const status = getStatus(l.status);
+              const isSelected = compareIds.includes(l.id);
               return (
-                <button key={l.id} onClick={() => openEdit(l)}
-                  className="text-left p-4 rounded-xl border w-full transition-all hover:shadow-sm"
-                  style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                <button key={l.id}
+                  onClick={() => compareMode ? toggleCompareId(l.id) : openEdit(l)}
+                  className="text-left p-4 rounded-xl border w-full transition-all"
+                  style={{
+                    borderColor: isSelected ? "var(--primary)" : "var(--border)",
+                    background: isSelected ? "#ede9fa" : "var(--card)",
+                    boxShadow: isSelected ? "0 0 0 2px var(--primary)" : "none",
+                  }}>
                   {/* Top row */}
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="font-semibold text-sm leading-snug" style={{ color: "var(--foreground)" }}>
+                    <div className="font-semibold text-sm leading-snug flex-1" style={{ color: "var(--foreground)" }}>
                       {l.address}
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: status.bg, color: status.color }}>
-                      {status.label}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {compareMode && (
+                        <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                          style={{ borderColor: isSelected ? "var(--primary)" : "var(--border)", background: isSelected ? "var(--primary)" : "transparent" }}>
+                          {isSelected && <span className="text-white text-xs font-bold">✓</span>}
+                        </div>
+                      )}
+                      {/* Visual status badge */}
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
+                        style={{ background: status.bg, color: status.color }}>
+                        <span>{status.icon}</span>
+                        <span>{status.label}</span>
+                      </span>
+                    </div>
                   </div>
                   {/* Rent + bedrooms + source */}
                   <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className="text-sm font-bold" style={{ color: "var(--foreground)" }}>
-                      ${l.rent.toLocaleString()}/mo
+                    <span className="text-base font-bold" style={{ color: "var(--foreground)" }}>
+                      ${l.rent.toLocaleString()}
+                      <span className="text-xs font-normal" style={{ color: "var(--muted-foreground)" }}>/mo</span>
                     </span>
                     <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{l.bedrooms}</span>
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full"
@@ -277,8 +477,8 @@ export default function ListingsPage() {
                   ) : null}
                   {/* Roommates */}
                   {l.roommates.length > 0 && (
-                    <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                      With: {l.roommates.join(", ")}
+                    <div className="text-xs" style={{ color: "#7c6bc4" }}>
+                      {l.roommates.join(" ")}
                     </div>
                   )}
                   {/* Notes preview */}
@@ -294,15 +494,6 @@ export default function ListingsPage() {
         )}
       </div>
 
-      {/* FAB */}
-      <div className="fixed bottom-6 right-6 z-20">
-        <button onClick={openAdd}
-          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg transition-all active:scale-95"
-          style={{ background: "var(--primary)", color: "#fff" }}>
-          +
-        </button>
-      </div>
-
       {/* Add / Edit overlay */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--background)" }}>
@@ -311,7 +502,7 @@ export default function ListingsPage() {
             <button onClick={() => setShowForm(false)} className="text-sm"
               style={{ color: "var(--muted-foreground)" }}>Cancel</button>
             <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-              {editId ? "Edit listing" : "Add listing"}
+              {editId ? "Edit place" : "Add a place"}
             </span>
             <button onClick={saveForm} className="text-sm font-semibold"
               style={{ color: form.address && form.rent ? "var(--primary)" : "var(--muted-foreground)" }}>
@@ -394,38 +585,43 @@ export default function ListingsPage() {
               />
             </div>
 
-            {/* Status + Fee */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider mb-2 block"
-                  style={{ color: "var(--muted-foreground)" }}>Status</label>
-                <div className="space-y-1.5">
-                  {STATUSES.map(s => (
+            {/* Status — visual pills */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider mb-3 block"
+                style={{ color: "var(--muted-foreground)" }}>Status</label>
+              <div className="grid grid-cols-2 gap-2">
+                {STATUSES.map(s => {
+                  const isActive = form.status === s.id;
+                  return (
                     <button key={s.id} onClick={() => setForm(f => ({ ...f, status: s.id }))}
-                      className="w-full px-3 py-2 text-xs font-medium rounded-lg text-left border transition-all"
+                      className="flex items-center gap-2 px-3 py-3 rounded-xl border text-left transition-all"
                       style={{
-                        borderColor: form.status === s.id ? "var(--foreground)" : "var(--border)",
-                        background: form.status === s.id ? "var(--foreground)" : "transparent",
-                        color: form.status === s.id ? "var(--background)" : "var(--muted-foreground)",
+                        borderColor: isActive ? s.color : "var(--border)",
+                        background: isActive ? s.bg : "transparent",
                       }}>
-                      {s.label}
+                      <span className="text-base" style={{ color: s.color }}>{s.icon}</span>
+                      <span className="text-sm font-semibold" style={{ color: isActive ? s.color : "var(--foreground)" }}>
+                        {s.label}
+                      </span>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider mb-2 block"
-                  style={{ color: "var(--muted-foreground)" }}>Application fee ($)</label>
-                <input type="number" placeholder="75"
-                  value={form.applicationFee ?? ""}
-                  onChange={e => setForm(f => ({ ...f, applicationFee: e.target.value ? +e.target.value : undefined }))}
-                  className="w-full px-4 py-3 text-sm rounded-lg border outline-none"
-                  style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--foreground)" }}
-                />
-                <p className="text-xs mt-1.5" style={{ color: "var(--muted-foreground)" }}>
-                  Adds to your fee total
-                </p>
-              </div>
+            </div>
+
+            {/* Application fee */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider mb-2 block"
+                style={{ color: "var(--muted-foreground)" }}>Application fee ($)</label>
+              <input type="number" placeholder="75"
+                value={form.applicationFee ?? ""}
+                onChange={e => setForm(f => ({ ...f, applicationFee: e.target.value ? +e.target.value : undefined }))}
+                className="w-full px-4 py-3 text-sm rounded-lg border outline-none"
+                style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--foreground)" }}
+              />
+              <p className="text-xs mt-1.5" style={{ color: "var(--muted-foreground)" }}>
+                Adds to your running fee total
+              </p>
             </div>
 
             {/* Notes */}
@@ -433,7 +629,7 @@ export default function ListingsPage() {
               <label className="text-xs font-semibold uppercase tracking-wider mb-2 block"
                 style={{ color: "var(--muted-foreground)" }}>Notes</label>
               <textarea
-                placeholder="First impressions, things to check, transit access..."
+                placeholder="First impressions, things to double-check, transit access..."
                 value={form.notes || ""}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 rows={3}
@@ -457,7 +653,7 @@ export default function ListingsPage() {
                 ))}
               </div>
               <div className="flex gap-2">
-                <input type="text" placeholder="Add a name..."
+                <input type="text" placeholder="@alex or Alex"
                   value={roommateInput}
                   onChange={e => setRoommateInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addFormRoommate(); } }}
@@ -485,6 +681,113 @@ export default function ListingsPage() {
           </div>
         </div>
       )}
+
+      {/* Head-to-head comparison modal */}
+      {showCompare && compareA && compareB && (
+        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--background)" }}>
+          <div className="flex items-center justify-between px-5 py-4 border-b"
+            style={{ borderColor: "var(--border)" }}>
+            <button onClick={() => setShowCompare(false)} className="text-sm"
+              style={{ color: "var(--muted-foreground)" }}>Close</button>
+            <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>Head-to-head</span>
+            <span className="w-10" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-6">
+            {/* Headers */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[compareA, compareB].map((l, i) => (
+                <div key={l.id} className="p-3 rounded-xl text-center"
+                  style={{ background: i === 0 ? "#ede9fa" : "#e6f4ef" }}>
+                  <div className="text-xs font-bold mb-1" style={{ color: i === 0 ? "#7c6bc4" : "#1a6b4a" }}>
+                    Option {String.fromCharCode(65 + i)}
+                  </div>
+                  <div className="text-sm font-semibold leading-snug" style={{ color: "var(--foreground)" }}>
+                    {l.address}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Comparison rows */}
+            {[
+              {
+                label: "Monthly rent",
+                a: `$${compareA.rent.toLocaleString()}`,
+                b: `$${compareB.rent.toLocaleString()}`,
+                winner: compareA.rent < compareB.rent ? "a" : compareA.rent > compareB.rent ? "b" : null,
+                winnerHint: "lower is better",
+              },
+              {
+                label: "Bedrooms",
+                a: compareA.bedrooms,
+                b: compareB.bedrooms,
+                winner: null,
+              },
+              {
+                label: "Found on",
+                a: PLATFORMS.find(p => p.id === compareA.source)?.label ?? "—",
+                b: PLATFORMS.find(p => p.id === compareB.source)?.label ?? "—",
+                winner: null,
+              },
+              {
+                label: "Status",
+                a: STATUSES.find(s => s.id === compareA.status)?.label ?? "—",
+                b: STATUSES.find(s => s.id === compareB.status)?.label ?? "—",
+                winner: null,
+              },
+              {
+                label: "App fee",
+                a: compareA.applicationFee ? `$${compareA.applicationFee.toLocaleString()}` : "None",
+                b: compareB.applicationFee ? `$${compareB.applicationFee.toLocaleString()}` : "None",
+                winner: (compareA.applicationFee ?? 0) < (compareB.applicationFee ?? 0) ? "a"
+                      : (compareA.applicationFee ?? 0) > (compareB.applicationFee ?? 0) ? "b" : null,
+                winnerHint: "lower is better",
+              },
+            ].map(row => (
+              <div key={row.label} className="mb-4">
+                <div className="text-xs font-semibold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--muted-foreground)" }}>{row.label}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["a", "b"] as const).map(side => {
+                    const val = side === "a" ? row.a : row.b;
+                    const isWinner = row.winner === side;
+                    return (
+                      <div key={side} className="px-3 py-2.5 rounded-lg border text-sm font-semibold text-center"
+                        style={{
+                          borderColor: isWinner ? (side === "a" ? "#7c6bc4" : "#1a6b4a") : "var(--border)",
+                          background: isWinner ? (side === "a" ? "#ede9fa" : "#e6f4ef") : "var(--card)",
+                          color: isWinner ? (side === "a" ? "#7c6bc4" : "#1a6b4a") : "var(--foreground)",
+                        }}>
+                        {val}
+                        {isWinner && <span className="ml-1 text-xs">★</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Notes side-by-side */}
+            {(compareA.notes || compareB.notes) && (
+              <div className="mt-4">
+                <div className="text-xs font-semibold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--muted-foreground)" }}>Notes</div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[compareA, compareB].map((l, i) => (
+                    <div key={l.id} className="px-3 py-2.5 rounded-lg border text-xs"
+                      style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--muted-foreground)" }}>
+                      {l.notes || <span style={{ opacity: 0.4 }}>No notes</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <BottomNav />
     </div>
   );
 }

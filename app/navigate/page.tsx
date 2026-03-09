@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { findCity, type CityData } from "@/lib/cityData";
+import BottomNav from "@/components/BottomNav";
 
 const NeighborhoodMap = dynamic(() => import("@/components/NeighborhoodMap"), { ssr: false });
 
@@ -429,7 +430,7 @@ function CityResults({ city, budgetMin, budgetMax, roommateCount }: {
       </div>
 
       {/* Slide content */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-2xl mx-auto px-6 py-8 pb-24">
         {slide === 0 && <SlideRentSnapshot city={city} budgetMin={budgetMin} budgetMax={budgetMax} totalMin={totalMin} totalMax={totalMax} roommateCount={roommateCount} />}
         {slide === 1 && <SlideNeighborhoods city={city} budgetMax={budgetMax} />}
         {slide === 2 && <SlideWhatToKnow city={city} />}
@@ -482,7 +483,11 @@ function NavigatePage() {
     <>
       <div className="sticky top-0 z-10 px-6 py-3 border-b flex items-center" style={{ background: "var(--background)", borderColor: "var(--border)" }}>
         <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
-          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-60 transition-opacity" style={{ color: "var(--foreground)" }}>← Aster</button>
+          <button onClick={() => router.push("/")}
+            className="text-xl tracking-widest uppercase hover:opacity-60 transition-opacity"
+            style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}>
+            Aster
+          </button>
           {city && <span className="text-sm" style={{ color: "var(--muted-foreground)" }}>{city.name}, {city.state}</span>}
         </div>
       </div>
@@ -490,6 +495,7 @@ function NavigatePage() {
         ? <CityResults city={city} budgetMin={budgetMin} budgetMax={budgetMax} roommateCount={roommateCount} />
         : <NotFound query={cityQuery} />
       }
+      <BottomNav />
     </>
   );
 }
