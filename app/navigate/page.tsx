@@ -65,8 +65,8 @@ function SlideRentSnapshot({ city, budgetMin, budgetMax, totalMin, totalMax, roo
             const pct = (row.perPerson / chartMax) * 100;
             const inRange = row.perPerson >= budgetMin && row.perPerson <= budgetMax;
             const underBudget = row.perPerson < budgetMin;
-            const barColor = inRange ? "#1a6b4a" : underBudget ? "var(--border)" : "var(--primary)";
-            const textColor = inRange ? "#1a6b4a" : underBudget ? "var(--muted-foreground)" : "var(--primary)";
+            const barColor = inRange ? "#1a6b4a" : underBudget ? "var(--border)" : "#c0392b";
+            const textColor = inRange ? "#1a6b4a" : underBudget ? "var(--muted-foreground)" : "#c0392b";
             return (
               <div key={row.label} className="flex items-center gap-3">
                 <span className="w-12 text-xs font-medium shrink-0" style={{ color: "var(--muted-foreground)" }}>{row.label}</span>
@@ -105,8 +105,8 @@ function SlideRentSnapshot({ city, budgetMin, budgetMax, totalMin, totalMax, roo
             <div className="w-3 h-3 rounded-full" style={{ background: "#1a6b4a" }} />
             Within your budget
           </div>
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--primary)" }}>
-            <div className="w-3 h-3 rounded-full" style={{ background: "var(--primary)" }} />
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: "#c0392b" }}>
+            <div className="w-3 h-3 rounded-full" style={{ background: "#c0392b" }} />
             Over budget
           </div>
           <div className="flex items-center gap-1.5 text-xs" style={{ color: "#1a6b4a" }}>
@@ -161,7 +161,7 @@ function SlideNeighborhoods({ city, budgetMax }: { city: CityData; budgetMax: nu
                     <span className="text-sm font-semibold" style={{ color: isSelected ? "var(--background)" : "var(--foreground)" }}>
                       {n.name}
                     </span>
-                    <span className="text-xs font-bold" style={{ color: isSelected ? (affordable ? "#06d6a0" : "#ff9999") : affordable ? "#1a6b4a" : "var(--primary)" }}>
+                    <span className="text-xs font-bold" style={{ color: isSelected ? (affordable ? "#06d6a0" : "#ff9999") : affordable ? "#1a6b4a" : "#c0392b" }}>
                       {fmt(n.avgRent1BR)}/mo
                     </span>
                   </div>

@@ -121,7 +121,7 @@ export default function Landing() {
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-4">
               {Array.from({ length: review.stars }).map((_, i) => (
-                <span key={i} style={{ color: "#7c3aed", fontSize: "18px", lineHeight: 1 }}>★</span>
+                <span key={i} style={{ color: "#7c6bc4", fontSize: "18px", lineHeight: 1 }}>★</span>
               ))}
             </div>
             <p
