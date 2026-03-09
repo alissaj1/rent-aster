@@ -67,8 +67,8 @@ export default function StartPage() {
         {/* Nav */}
         <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: "var(--border)" }}>
           <span
-            className="text-xl tracking-widest uppercase cursor-pointer"
-            style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}
+            className="text-base font-semibold tracking-tight cursor-pointer"
+            style={{ color: "var(--foreground)" }}
             onClick={() => router.push("/")}
           >
             Aster

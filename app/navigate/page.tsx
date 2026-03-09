@@ -484,8 +484,8 @@ function NavigatePage() {
       <div className="sticky top-0 z-10 px-6 py-3 border-b flex items-center" style={{ background: "var(--background)", borderColor: "var(--border)" }}>
         <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
           <button onClick={() => router.push("/")}
-            className="text-xl tracking-widest uppercase hover:opacity-60 transition-opacity"
-            style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}>
+            className="text-base font-semibold tracking-tight hover:opacity-60 transition-opacity"
+            style={{ color: "var(--foreground)" }}>
             Aster
           </button>
           {city && <span className="text-sm" style={{ color: "var(--muted-foreground)" }}>{city.name}, {city.state}</span>}

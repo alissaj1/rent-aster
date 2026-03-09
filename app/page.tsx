@@ -78,65 +78,58 @@ export default function Landing() {
 
       {/* Dark hero */}
       <section
-        className="flex flex-col px-6 pt-10 pb-16"
-        style={{ background: "#0d0b14", minHeight: "100svh" }}
+        className="flex flex-col px-6 pt-10 pb-20"
+        style={{ background: "#2a2440", minHeight: "100svh" }}
       >
         {/* Nav */}
-        <nav className="flex items-center justify-between mb-16">
+        <nav className="flex items-center justify-between mb-20">
           <span
-            className="text-2xl tracking-widest uppercase"
-            style={{
-              fontFamily: "var(--font-logo)",
-              fontWeight: 300,
-              color: "#ffffff",
-              letterSpacing: "0.22em",
-            }}
+            className="text-base font-semibold tracking-tight"
+            style={{ color: "#ffffff" }}
           >
             Aster
           </span>
           <button
             onClick={() => router.push("/start")}
             className="text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-60"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            style={{ color: "rgba(255,255,255,0.45)" }}
           >
             Get started
           </button>
         </nav>
 
-        {/* Hero text */}
-        <div className="flex-1 flex flex-col justify-center">
-          <h1
-            className="font-bold leading-none tracking-tight mb-12"
-            style={{ fontSize: "clamp(52px, 12vw, 96px)", lineHeight: 0.92 }}
+        {/* Hero text — centered */}
+        <div className="flex-1 flex flex-col items-center justify-center text-center max-w-2xl mx-auto w-full">
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-6"
+            style={{ color: "#a89fd4" }}
           >
-            <span style={{ color: "#ffffff" }}>KNOW</span>
+            For renters who deserve better
+          </p>
+          <h1
+            className="text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6"
+            style={{ color: "#ffffff" }}
+          >
+            Renting is confusing.
             <br />
-            <span style={{ color: "#ffffff" }}>YOUR</span>
-            <br />
-            <span style={{ color: "#7c6bc4" }}>CITY.</span>
-            <br />
-            <span style={{ color: "#ffffff" }}>TRACK</span>
-            <br />
-            <span style={{ color: "#ffffff" }}>YOUR</span>
-            <br />
-            <span style={{ color: "#7c6bc4" }}>SEARCH.</span>
-            <br />
-            <span style={{ color: "#ffffff" }}>BUILD</span>
-            <br />
-            <span style={{ color: "#ffffff" }}>YOUR</span>
-            <br />
-            <span style={{ color: "#7c6bc4" }}>WEALTH.</span>
+            <span style={{ color: "#a89fd4" }}>It doesn&apos;t have to be.</span>
           </h1>
-
+          <p
+            className="text-base leading-relaxed mb-10 max-w-lg"
+            style={{ color: "rgba(255,255,255,0.5)" }}
+          >
+            Moving to a new city is hard enough. We built the guide, financial
+            management tool, and renter advocate we wish we had — all in one.
+          </p>
           <button
             onClick={() => router.push("/start")}
-            className="self-start px-8 py-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+            className="px-8 py-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
             style={{ background: "#7c6bc4", color: "#ffffff" }}
           >
-            Get started free
+            Let&apos;s get started
           </button>
           <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.3)" }}>
-            No sign-up required.
+            Free. No sign-up required.
           </p>
         </div>
       </section>
@@ -168,10 +161,7 @@ export default function Landing() {
                       {f.desc}
                     </div>
                   </div>
-                  <span
-                    className="text-xl ml-4 flex-shrink-0"
-                    style={{ color: "var(--primary)" }}
-                  >
+                  <span className="text-xl ml-4 flex-shrink-0" style={{ color: "var(--primary)" }}>
                     →
                   </span>
                 </button>
@@ -190,10 +180,7 @@ export default function Landing() {
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
       >
         <div className="max-w-xl mx-auto text-center">
-          <div
-            className="transition-opacity duration-400"
-            style={{ opacity: visible ? 1 : 0 }}
-          >
+          <div className="transition-opacity duration-400" style={{ opacity: visible ? 1 : 0 }}>
             <div className="flex justify-center gap-1 mb-4">
               {Array.from({ length: review.stars }).map((_, i) => (
                 <span key={i} style={{ color: "#7c6bc4", fontSize: "18px", lineHeight: 1 }}>★</span>
@@ -212,7 +199,6 @@ export default function Landing() {
               {review.location}
             </p>
           </div>
-
           <div className="flex justify-center gap-2 mt-8">
             {REVIEWS.map((_, i) => (
               <button
@@ -233,10 +219,7 @@ export default function Landing() {
       {/* Cities */}
       <section className="px-6 py-14">
         <div className="max-w-2xl mx-auto text-center">
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-6"
-            style={{ color: "var(--primary)" }}
-          >
+          <p className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--primary)" }}>
             Now covering
           </p>
           <div className="flex flex-wrap justify-center gap-3 mb-4">
@@ -257,10 +240,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer
-        className="px-8 py-6 border-t mt-auto text-center"
-        style={{ borderColor: "var(--border)" }}
-      >
+      <footer className="px-8 py-6 border-t mt-auto text-center" style={{ borderColor: "var(--border)" }}>
         <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
           Aster — built for renters
         </p>

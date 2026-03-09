@@ -220,6 +220,10 @@ export default function ListingsPage() {
     localStorage.setItem("aster_roommates", JSON.stringify(next));
   }
 
+  function quickUpdateStatus(id: string, newStatus: StatusId) {
+    persist(listings.map(l => l.id === id ? { ...l, status: newStatus } : l));
+  }
+
   function handleImport() {
     if (!importUrl.trim()) return;
     const prefill = parseListingUrl(importUrl.trim());
@@ -252,8 +256,8 @@ export default function ListingsPage() {
       <nav className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10"
         style={{ borderColor: "var(--border)", background: "var(--background)" }}>
         <span
-          className="text-xl tracking-widest uppercase cursor-pointer"
-          style={{ fontFamily: "var(--font-logo)", fontWeight: 300, color: "var(--foreground)", letterSpacing: "0.18em" }}
+          className="text-base font-semibold tracking-tight cursor-pointer"
+          style={{ color: "var(--foreground)" }}
           onClick={() => router.push("/")}
         >
           Aster
@@ -429,9 +433,9 @@ export default function ListingsPage() {
               const status = getStatus(l.status);
               const isSelected = compareIds.includes(l.id);
               return (
-                <button key={l.id}
+                <div key={l.id}
                   onClick={() => compareMode ? toggleCompareId(l.id) : openEdit(l)}
-                  className="text-left p-4 rounded-xl border w-full transition-all"
+                  className="p-4 rounded-xl border w-full transition-all cursor-pointer"
                   style={{
                     borderColor: isSelected ? "var(--primary)" : "var(--border)",
                     background: isSelected ? "#ede9fa" : "var(--card)",
@@ -449,12 +453,18 @@ export default function ListingsPage() {
                           {isSelected && <span className="text-white text-xs font-bold">✓</span>}
                         </div>
                       )}
-                      {/* Visual status badge */}
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
-                        style={{ background: status.bg, color: status.color }}>
-                        <span>{status.icon}</span>
-                        <span>{status.label}</span>
-                      </span>
+                      {/* Status dropdown */}
+                      <select
+                        value={l.status}
+                        onChange={e => { e.stopPropagation(); quickUpdateStatus(l.id, e.target.value as StatusId); }}
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs font-bold px-2 py-1 rounded-full border-0 outline-none cursor-pointer"
+                        style={{ background: status.bg, color: status.color }}
+                      >
+                        {STATUSES.map(s => (
+                          <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   {/* Rent + bedrooms + source */}
@@ -487,7 +497,7 @@ export default function ListingsPage() {
                       {l.notes}
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
