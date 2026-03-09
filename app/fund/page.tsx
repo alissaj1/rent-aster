@@ -211,8 +211,8 @@ export default function FundPage() {
     return (
       <div className="min-h-screen flex flex-col pb-20" style={{ background: "var(--background)" }}>
         <nav className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <span className="text-lg uppercase tracking-[0.06em] font-semibold cursor-pointer"
-            style={{ fontFamily: "var(--font-geist-sans)", color: "var(--foreground)" }}
+          <span className="text-base font-semibold tracking-tight cursor-pointer"
+            style={{ color: "var(--foreground)" }}
             onClick={() => router.push("/")}>
             Aster
           </span>
