@@ -128,9 +128,6 @@ export default function Landing() {
           >
             Let&apos;s get started
           </button>
-          <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Free. No sign-up required.
-          </p>
         </div>
       </section>
 
