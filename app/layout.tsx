@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RentReady — Your City, Your Way",
+  title: "Aster — Your City, Your Way",
   description: "The renter's guide to any city. Neighborhoods, rent prices, market norms, and more.",
 };
 

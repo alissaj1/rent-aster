@@ -22,11 +22,12 @@ function pct(val: number) { return ((val - MIN) / (MAX - MIN)) * 100; }
 
 export default function StartPage() {
   const router = useRouter();
-  const [step, setStep]       = useState<Step>(1);
-  const [city, setCity]       = useState("");
+  const [step, setStep]           = useState<Step>(1);
+  const [city, setCity]           = useState("");
   const [cityInput, setCityInput] = useState("");
   const [budgetMin, setBudgetMin] = useState(1200);
   const [budgetMax, setBudgetMax] = useState(2500);
+  const [roommate, setRoommate]   = useState<typeof ROOMMATE_OPTIONS[number] | null>(null);
 
   function handleCityInput(val: string) { setCityInput(val); setCity(val); }
   function handleCitySelect(c: string)  { setCity(c); setCityInput(c); }
@@ -58,8 +59,8 @@ export default function StartPage() {
     <>
       <style>{`
         .range-thumb { pointer-events: none; -webkit-appearance: none; appearance: none; background: transparent; width: 100%; position: absolute; height: 0; }
-        .range-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; pointer-events: all; width: 20px; height: 20px; border-radius: 50%; background: var(--foreground); cursor: pointer; border: 2px solid var(--background); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
-        .range-thumb::-moz-range-thumb { pointer-events: all; width: 20px; height: 20px; border-radius: 50%; background: var(--foreground); cursor: pointer; border: 2px solid var(--background); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+        .range-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; pointer-events: all; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid var(--background); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+        .range-thumb::-moz-range-thumb { pointer-events: all; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid var(--background); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
       `}</style>
 
       <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
@@ -70,7 +71,7 @@ export default function StartPage() {
             style={{ color: "var(--foreground)" }}
             onClick={() => router.push("/")}
           >
-            RentReady
+            Aster
           </span>
           <div className="flex items-center gap-2">
             {([1, 2, 3] as Step[]).map((s) => (
@@ -119,7 +120,7 @@ export default function StartPage() {
 
               <button onClick={() => city && setStep(2)} disabled={!city}
                 className="w-full py-3 rounded-lg text-sm font-semibold transition-all"
-                style={{ background: city ? "var(--foreground)" : "var(--muted)", color: city ? "var(--background)" : "var(--muted-foreground)", cursor: city ? "pointer" : "not-allowed" }}
+                style={{ background: city ? "var(--primary)" : "var(--muted)", color: city ? "#ffffff" : "var(--muted-foreground)", cursor: city ? "pointer" : "not-allowed" }}
               >Continue →</button>
             </div>
           )}
@@ -150,7 +151,7 @@ export default function StartPage() {
                 {/* Track background */}
                 <div className="absolute left-0 right-0 rounded-full" style={{ top: "50%", transform: "translateY(-50%)", height: "4px", background: "var(--muted)" }} />
                 {/* Active track */}
-                <div className="absolute rounded-full" style={{ top: "50%", transform: "translateY(-50%)", height: "4px", left: `${pct(budgetMin)}%`, right: `${100 - pct(budgetMax)}%`, background: "var(--foreground)" }} />
+                <div className="absolute rounded-full" style={{ top: "50%", transform: "translateY(-50%)", height: "4px", left: `${pct(budgetMin)}%`, right: `${100 - pct(budgetMax)}%`, background: "var(--primary)" }} />
                 <input type="range" className="range-thumb" min={MIN} max={MAX} step={STEP} value={budgetMin}
                   onChange={(e) => handleMinChange(+e.target.value)}
                   style={{ top: "50%", transform: "translateY(-50%)", zIndex: budgetMin > MAX - 200 ? 5 : 3 }}
@@ -172,7 +173,7 @@ export default function StartPage() {
 
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="px-5 py-3 rounded-lg text-sm font-medium border transition-all" style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>← Back</button>
-                <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-lg text-sm font-semibold" style={{ background: "var(--foreground)", color: "var(--background)" }}>Continue →</button>
+                <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-lg text-sm font-semibold" style={{ background: "var(--primary)", color: "#ffffff" }}>Continue →</button>
               </div>
             </div>
           )}
@@ -186,26 +187,37 @@ export default function StartPage() {
                 Your range is <strong>${budgetMin.toLocaleString()}–${budgetMax.toLocaleString()}/mo</strong> per person. We&apos;ll calculate the total apartment cost.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 {ROOMMATE_OPTIONS.map((opt) => {
                   const totalMin = budgetMin * opt.people;
                   const totalMax = budgetMax * opt.people;
+                  const isSelected = roommate?.id === opt.id;
                   return (
-                    <button key={opt.id} onClick={() => handleSubmit(opt)}
-                      className="p-4 rounded-lg border text-left transition-all hover:border-current"
-                      style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                    <button key={opt.id} onClick={() => setRoommate(opt)}
+                      className="p-4 rounded-lg border text-left transition-all"
+                      style={{
+                        borderColor: isSelected ? "var(--primary)" : "var(--border)",
+                        background: isSelected ? "var(--primary)" : "var(--card)",
+                      }}
                     >
-                      <div className="font-semibold text-sm mb-0.5" style={{ color: "var(--foreground)" }}>{opt.label}</div>
-                      <div className="text-xs mb-1" style={{ color: "var(--muted-foreground)" }}>{opt.bedrooms}</div>
-                      <div className="text-xs mb-3" style={{ color: "var(--muted-foreground)" }}>{opt.sub}</div>
-                      <div className="text-sm font-bold" style={{ color: "var(--primary)" }}>
+                      <div className="font-semibold text-sm mb-0.5" style={{ color: isSelected ? "#ffffff" : "var(--foreground)" }}>{opt.label}</div>
+                      <div className="text-xs mb-1" style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "var(--muted-foreground)" }}>{opt.bedrooms}</div>
+                      <div className="text-xs mb-3" style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "var(--muted-foreground)" }}>{opt.sub}</div>
+                      <div className="text-sm font-bold" style={{ color: isSelected ? "#ffffff" : "var(--primary)" }}>
                         ${totalMin.toLocaleString()}–${totalMax.toLocaleString()}
                       </div>
-                      <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>total apt/mo</div>
+                      <div className="text-xs" style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "var(--muted-foreground)" }}>total apt/mo</div>
                     </button>
                   );
                 })}
               </div>
+
+              <button
+                onClick={() => roommate && handleSubmit(roommate)}
+                disabled={!roommate}
+                className="w-full py-3 rounded-lg text-sm font-semibold mb-3 transition-all"
+                style={{ background: roommate ? "var(--primary)" : "var(--muted)", color: roommate ? "#ffffff" : "var(--muted-foreground)", cursor: roommate ? "pointer" : "not-allowed" }}
+              >View results →</button>
 
               <button onClick={() => setStep(2)} className="w-full py-3 rounded-lg text-sm font-medium border" style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>← Back</button>
             </div>
