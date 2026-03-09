@@ -9,7 +9,7 @@ const NeighborhoodMap = dynamic(() => import("@/components/NeighborhoodMap"), { 
 
 function fmt(n: number) { return `$${n.toLocaleString()}`; }
 
-const SLIDES = ["Rent Range", "Neighborhoods", "What to Know", "Where to Search"];
+const SLIDES = ["Rent", "Neighborhoods", "What to know", "Where to search"];
 
 // ── Slide 1: Rent Range ──────────────────────────────────────────────────────
 function SlideRentSnapshot({ city, budgetMin, budgetMax, totalMin, totalMax, roommateCount }: {
@@ -29,7 +29,7 @@ function SlideRentSnapshot({ city, budgetMin, budgetMax, totalMin, totalMax, roo
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--primary)" }}>Rent Range</p>
-      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>{city.name} Rent Prices</h2>
+      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>{city.name} rent prices</h2>
 
       {/* Budget summary: individual vs total */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -127,7 +127,7 @@ function SlideNeighborhoods({ city, budgetMax }: { city: CityData; budgetMax: nu
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--primary)" }}>Neighborhoods</p>
-      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>Where to Live in {city.name}</h2>
+      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>Where to live in {city.name}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Map */}
@@ -222,7 +222,7 @@ function SlideWhatToKnow({ city }: { city: CityData }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--primary)" }}>What to Know</p>
-      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>Before You Sign in {city.name}</h2>
+      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--foreground)" }}>Before you sign in {city.name}</h2>
 
       {/* Sub-tab pill switcher */}
       <div className="flex gap-1 mb-5 p-1 rounded-lg" style={{ background: "var(--muted)" }}>
@@ -300,21 +300,21 @@ function SlideWhatToKnow({ city }: { city: CityData }) {
           {city.redFlags.map((flag, i) => (
             <div key={i} className="rounded-lg p-5"
               style={{
-                borderLeft: `4px solid ${flag.severity === "high" ? "var(--primary)" : "#f59e0b"}`,
+                borderLeft: `4px solid ${flag.severity === "high" ? "#c0392b" : "#f59e0b"}`,
                 background: flag.severity === "high" ? "#fff5f5" : "#fffbeb",
                 border: `1px solid ${flag.severity === "high" ? "#fecaca" : "#fde68a"}`,
                 borderLeftWidth: "4px",
               }}>
               <div className="flex items-start gap-3">
-                <div className="text-xl shrink-0 mt-0.5" style={{ color: flag.severity === "high" ? "var(--primary)" : "#92400e" }}>
+                <div className="text-xl shrink-0 mt-0.5" style={{ color: flag.severity === "high" ? "#c0392b" : "#92400e" }}>
                   {flag.severity === "high" ? "✕" : "!"}
                 </div>
                 <div>
                   <div className="font-bold text-sm mb-1 flex items-center gap-2"
-                    style={{ color: flag.severity === "high" ? "var(--primary)" : "#92400e" }}>
+                    style={{ color: flag.severity === "high" ? "#c0392b" : "#92400e" }}>
                     {flag.title}
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                      style={{ background: flag.severity === "high" ? "#fee2e2" : "#fef3c7", color: flag.severity === "high" ? "var(--primary)" : "#92400e" }}>
+                      style={{ background: flag.severity === "high" ? "#fee2e2" : "#fef3c7", color: flag.severity === "high" ? "#c0392b" : "#92400e" }}>
                       {flag.severity === "high" ? "High risk" : "Watch out"}
                     </span>
                   </div>
@@ -336,7 +336,7 @@ function SlideSearch({ city }: { city: CityData }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--primary)" }}>Where to Search</p>
-      <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--foreground)" }}>Best Search Platforms</h2>
+      <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--foreground)" }}>Best search platforms</h2>
       <p className="text-sm mb-5" style={{ color: "var(--muted-foreground)" }}>Ordered by relevance for {city.name}.</p>
       <div className="flex flex-col gap-3">
         {city.searchPlatforms.map((p, i) => {
@@ -482,7 +482,7 @@ function NavigatePage() {
     <>
       <div className="sticky top-0 z-10 px-6 py-3 border-b flex items-center" style={{ background: "var(--background)", borderColor: "var(--border)" }}>
         <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
-          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-60 transition-opacity" style={{ color: "var(--foreground)" }}>← RentReady</button>
+          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-60 transition-opacity" style={{ color: "var(--foreground)" }}>← Aster</button>
           {city && <span className="text-sm" style={{ color: "var(--muted-foreground)" }}>{city.name}, {city.state}</span>}
         </div>
       </div>

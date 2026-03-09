@@ -62,7 +62,7 @@ export default function Landing() {
         style={{ borderColor: "var(--border)" }}
       >
         <span className="font-semibold text-base tracking-tight" style={{ color: "var(--foreground)" }}>
-          RentReady
+          Aster
         </span>
         <button
           onClick={() => router.push("/start")}
@@ -121,7 +121,7 @@ export default function Landing() {
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-4">
               {Array.from({ length: review.stars }).map((_, i) => (
-                <span key={i} style={{ color: "#c0392b", fontSize: "18px", lineHeight: 1 }}>★</span>
+                <span key={i} style={{ color: "#7c3aed", fontSize: "18px", lineHeight: 1 }}>★</span>
               ))}
             </div>
             <p
@@ -188,7 +188,7 @@ export default function Landing() {
         style={{ borderColor: "var(--border)" }}
       >
         <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-          RentReady — built for renters
+          Aster — built for renters
         </p>
       </footer>
     </div>
