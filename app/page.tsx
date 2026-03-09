@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 const REVIEWS = [
   {
-    text: "I moved from a small town to Chicago with no idea what was normal. RentReady told me I was about to pay a broker fee I didn't have to. Saved me $1,800.",
+    text: "I moved from a small town to Chicago with no idea what was normal. Aster told me I was about to pay a broker fee I didn't have to. Saved me $1,800.",
     name: "Destiny M.",
     location: "Chicago, IL",
     stars: 5,
@@ -106,6 +106,48 @@ export default function Landing() {
         <p className="text-xs mt-4" style={{ color: "var(--muted-foreground)" }}>
           Free. No sign-up required.
         </p>
+      </section>
+
+      {/* Features */}
+      <section className="px-6 py-14 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs font-semibold uppercase tracking-widest text-center mb-8"
+            style={{ color: "var(--primary)" }}>Three tools in one</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[
+              {
+                emoji: "🏙️",
+                title: "City Navigator",
+                desc: "Explore rent prices, neighborhoods, and market norms before you move.",
+                cta: "Explore cities →",
+                href: "/start",
+              },
+              {
+                emoji: "🏠",
+                title: "My apartment tracker",
+                desc: "Manage every listing, tour, and application — all in one place.",
+                cta: "Track my search →",
+                href: "/listings",
+              },
+              {
+                emoji: "💰",
+                title: "Housing Fund",
+                desc: "Automatically invest alongside your rent toward a future home.",
+                cta: "Start my fund →",
+                href: "/fund",
+              },
+            ].map(f => (
+              <button key={f.title} onClick={() => router.push(f.href)}
+                className="p-5 rounded-xl border text-left transition-all hover:shadow-sm"
+                style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                <div className="text-2xl mb-3">{f.emoji}</div>
+                <div className="font-semibold text-sm mb-2" style={{ color: "var(--foreground)" }}>{f.title}</div>
+                <div className="text-xs leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>{f.desc}</div>
+                <div className="text-xs font-semibold" style={{ color: "var(--primary)" }}>{f.cta}</div>
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Reviews */}
